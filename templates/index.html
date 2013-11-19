@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}rblg - rblstr microblog{% endblock %}
+{% block content %}
+<div>
+	<div>
+		{% if session.get('logged_in') %}
+			<a href="/logout">logout</a>
+		{% else %}
+			<form action="/login" method="post">
+				<span>username</span><input type="text" name="username"></input><span>{{errors.get('username_error')}}</span>
+				<span>password</span><input type="password" name="password"></input><span>{{errors.get('password_error')}}</span>
+				<input type="submit"></input>
+			</form>
+		{% endif %}
+	</div>
+	<div>
+		{% if blogs %}
+			{% for blog in blogs  %}
+			{% endfor %}
+		{% else %}
+		<p>No entries</b>
+	{% endif %}
+</div>
+</div>
+{% endblock %}

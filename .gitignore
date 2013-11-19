@@ -52,3 +52,6 @@ include/
 
 # vim
 *.swp
+
+# temp db files
+*.db
