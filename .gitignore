@@ -49,3 +49,6 @@ docs/_build/
 # virtualenv
 include/
 .Python
+
+# vim
+*.swp
