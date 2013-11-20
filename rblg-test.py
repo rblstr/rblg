@@ -1,5 +1,6 @@
 import os
 import tempfile
+import hmac
 import unittest
 import rblg
 
@@ -222,38 +223,68 @@ class UserRegistrationTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Registration successful' in response.data)
 
-    def test_login_after_register(self):
-        """ Test if logged in after registration """
+    def test_register_username_error(self):
+        """ An error is reported when an invalid username is entered """
         response = self.app.post('/register', data={
-            'username':'test_username',
-            'password':'test_password'
+            'username':'',
+            'password':'password'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('Registration successful' in response.data)
+        self.assertTrue('Invalid username' in response.data)
+
+    def test_register_password_error(self):
+        """ An error is reported when an invalid password is entered """
+        response = self.app.post('/register', data={
+            'username':'test_username',
+            'password':''
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Invalid password' in response.data)
+
+    def test_login_after_register(self):
+        """ Test if logged in after registration """
+        self.test_registration_exists()
         response = self.app.get('/')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('/logout' in response.data)
 
     def test_register_logout_login(self):
         """ Test if we can re-login after registration """
-        response = self.app.post('/register', data={
-            'username':'test_username',
-            'password':'test_password'
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('Registration successful' in response.data)
-        response = self.app.get('/')
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('/logout' in response.data)
-        response = self.app.get('/logout')
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('Logout successful' in response.data)
+        self.test_login_after_register()
         response = self.app.post('/login', data={
             'username':'test_username',
             'password':'test_password'
         })
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
+
+
+class CookieTestCase(unittest.TestCase):
+    def test_create_secure_cookie(self):
+        cookie = rblg.create_cookie('admin')
+        self.assertEqual(cookie, "%s|%s" % ('admin', hmac.new('skeleton_key', 'admin').hexdigest()))
+
+    def test_created_cookies_can_be_validated(self):
+        cookie = rblg.create_cookie('admin')
+        self.assertTrue(rblg.validate_cookie(cookie))
+
+    def test_tampered_cookies_fail_validation_username(self):
+        cookie = rblg.create_cookie('admin')
+        split = cookie.split('|')
+        new_cookie = 'new_username|%s' % split[1]
+        self.assertFalse(rblg.validate_cookie(new_cookie))
+
+    def test_tampered_cookies_fail_validation_hash(self):
+        cookie = '%s|%s' % ('username', hmac.new('my_key', 'username').hexdigest())
+        self.assertFalse(rblg.validate_cookie(cookie))
+
+    def test_non_cookie_fails_validation(self):
+        cookie = 'i_am_not_a_cookie'
+        self.assertFalse(rblg.validate_cookie(cookie))
+
+    def test_parse_cookie(self):
+        cookie = rblg.create_cookie('username')
+        self.assertEqual('username', rblg.parse_cookie(cookie))
 
 
 if __name__ == '__main__':
