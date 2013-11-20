@@ -25,12 +25,15 @@ class FrontPageTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists('rblg.db'))
 
 
-class RblgSetupTestCase(unittest.TestCase):
+class UserLoginTestCase(unittest.TestCase):
     def setUp(self):
         """ Setup empty database """
         rblg.app.testing = True
         self.app = rblg.app.test_client()
         rblg.db.create_all()
+        test_user = rblg.User('admin', 'admin')
+        rblg.db.session.add(test_user)
+        rblg.db.session.commit()
 
     def tearDown(self):
         """ Cleanup database file """
@@ -104,12 +107,16 @@ class RblgSetupTestCase(unittest.TestCase):
         self.assertFalse('/logout' in response.data)
         self.assertTrue('/login' in response.data)
 
+
 class PostsTestCase(unittest.TestCase):
     def setUp(self):
         """ Setup empty database """
         rblg.app.testing = True
         self.app = rblg.app.test_client()
         rblg.db.create_all()
+        test_user = rblg.User('admin', 'admin')
+        rblg.db.session.add(test_user)
+        rblg.db.session.commit()
 
     def tearDown(self):
         """ Cleanup database file """
@@ -195,6 +202,60 @@ class PostsTestCase(unittest.TestCase):
         self.assertTrue('post_id_1' in response.data)
         self.assertTrue('post_id_1_content' in response.data)
 
+class UserRegistrationTestCase(unittest.TestCase):
+    def setUp(self):
+        rblg.app.testing = True
+        self.app = rblg.app.test_client()
+        rblg.db.create_all()
+
+    def tearDown(self):
+        """ Cleanup database file """
+        rblg.db.session.remove()
+        rblg.db.drop_all()
+
+    def test_registration_exists(self):
+        """ Test registration URL """
+        response = self.app.post('/register', data={
+            'username':'test_username',
+            'password':'test_password'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Registration successful' in response.data)
+
+    def test_login_after_register(self):
+        """ Test if logged in after registration """
+        response = self.app.post('/register', data={
+            'username':'test_username',
+            'password':'test_password'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Registration successful' in response.data)
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('/logout' in response.data)
+
+    def test_register_logout_login(self):
+        """ Test if we can re-login after registration """
+        response = self.app.post('/register', data={
+            'username':'test_username',
+            'password':'test_password'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Registration successful' in response.data)
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('/logout' in response.data)
+        response = self.app.get('/logout')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Logout successful' in response.data)
+        response = self.app.post('/login', data={
+            'username':'test_username',
+            'password':'test_password'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login successful' in response.data)
+
 
 if __name__ == '__main__':
     unittest.main()
+
