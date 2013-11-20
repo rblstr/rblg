@@ -18,6 +18,15 @@
 		{% endif %}
 	</div>
 	<div>
+		<form action="/blogs" method="post">
+			<span>title</span><input type="text" name="title"></input>
+			<br>
+			<span>content</span><input type="textarea" name="content"></input>
+			<br>
+			<input type="submit"></input>
+		</form>
+	</div>
+	<div>
 		{% if posts %}
 			{% for post in posts %}
 				<div>
