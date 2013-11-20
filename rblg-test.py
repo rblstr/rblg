@@ -8,6 +8,12 @@ class FrontPageTestCase(unittest.TestCase):
     def setUp(self):
         rblg.app.testing = True
         self.app = rblg.app.test_client()
+        rblg.db.create_all()
+
+    def tearDown(self):
+        """ Cleanup database file """
+        rblg.db.session.remove()
+        rblg.db.drop_all()
 
     def test_frontpage(self):
         """ make sure everything is setup correctly """
@@ -22,15 +28,14 @@ class FrontPageTestCase(unittest.TestCase):
 class RblgSetupTestCase(unittest.TestCase):
     def setUp(self):
         """ Setup empty database """
-        self.db_file, rblg.app.config['DATABASE'] = tempfile.mkstemp()
         rblg.app.testing = True
         self.app = rblg.app.test_client()
-        rblg.init_db()
+        rblg.db.create_all()
 
     def tearDown(self):
         """ Cleanup database file """
-        os.close(self.db_file)
-        os.unlink(rblg.app.config['DATABASE'])
+        rblg.db.session.remove()
+        rblg.db.drop_all()
 
     def login(self, username, password):
         """ login helper """
@@ -42,12 +47,6 @@ class RblgSetupTestCase(unittest.TestCase):
     def logout(self):
         """ logout helper """
         return self.app.get('/logout')
-
-    def test_empty_db(self):
-        """ database is blank """
-        response = self.app.get('/')
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue('No entries' in response.data)
 
     def test_login_link(self):
         """ test login link is present when not logged in """
@@ -104,6 +103,97 @@ class RblgSetupTestCase(unittest.TestCase):
         response = self.app.get('/')
         self.assertFalse('/logout' in response.data)
         self.assertTrue('/login' in response.data)
+
+class PostsTestCase(unittest.TestCase):
+    def setUp(self):
+        """ Setup empty database """
+        rblg.app.testing = True
+        self.app = rblg.app.test_client()
+        rblg.db.create_all()
+
+    def tearDown(self):
+        """ Cleanup database file """
+        rblg.db.session.remove()
+        rblg.db.drop_all()
+
+    def test_empty_db(self):
+        """ database is blank """
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('No entries' in response.data)
+
+    def test_must_login_to_post(self):
+        """ must login to post """
+        response = self.app.post('/blogs', data={
+            'title':'post_id_1',
+            'content':'post_id_1_content'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Must be logged in to post' in response.data)
+
+    def test_login_and_post(self):
+        """ can only create posts when logged in """
+        response = self.app.post('/login', data={
+            'username':'admin',
+            'password':'admin'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login successful' in response.data)
+        response = self.app.post('/blogs', data={
+            'title':'post_id_1',
+            'content':'post_id_1_content'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Post created' in response.data)
+
+    def test_login_and_post_content_error(self):
+        """ can only create posts when logged in """
+        response = self.app.post('/login', data={
+            'username':'admin',
+            'password':'admin'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login successful' in response.data)
+        response = self.app.post('/blogs', data={
+            'title':'post_id_1',
+            'content':''
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('No content' in response.data)
+
+    def test_login_and_post_title_error(self):
+        """ can only create posts when logged in """
+        response = self.app.post('/login', data={
+            'username':'admin',
+            'password':'admin'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login successful' in response.data)
+        response = self.app.post('/blogs', data={
+            'title':'',
+            'content':'post_id_1_content'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('No title' in response.data)
+
+    def test_post_added_to_db(self):
+        """ can only create posts when logged in """
+        response = self.app.post('/login', data={
+            'username':'admin',
+            'password':'admin'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login successful' in response.data)
+        response = self.app.post('/blogs', data={
+            'title':'post_id_1',
+            'content':'post_id_1_content'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Post created' in response.data)
+        response = self.app.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('post_id_1' in response.data)
+        self.assertTrue('post_id_1_content' in response.data)
 
 
 if __name__ == '__main__':

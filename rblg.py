@@ -13,6 +13,17 @@ app.config['USERNAME'] = USERNAME
 app.config['PASSWORD'] = PASSWORD
 db = SQLAlchemy(app)
 
+
+class Post(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	title = db.Column(db.Text)
+	content = db.Column(db.Text)
+
+	def __init__(self, title, content):
+		self.title = title
+		self.content = content
+
+
 def init_db():
 	db.create_all()
 
@@ -42,13 +53,34 @@ def logout():
 	return response
 
 
+@app.route('/blogs', methods=['POST'])
+def blogs():
+	username = request.cookies.get('user')
+	if not username or username != app.config['USERNAME']:
+		return 'Must be logged in to post'
+	errors = {}
+	post_title = request.form.get('title')
+	if not post_title:
+		errors['title_error'] = 'No title'
+	post_content = request.form.get('content')
+	if not post_content:
+		errors['content_error'] = 'No content'
+	if errors:
+		return "title_error: %s content_error: %s" % (errors.get('title_error', ''), errors.get('content_error', ''))
+	post = Post(post_title, post_content)
+	db.session.add(post)
+	db.session.commit()
+	return 'Post created'
+
+
 @app.route('/', methods=['GET'])
 def index():
 	session = {}
 	username = request.cookies.get('user')
 	if username and username == app.config['USERNAME']:
 		session['logged_in'] = True
-	return render_template('index.html', session=session, errors={})
+	posts = Post.query.all()
+	return render_template('index.html', session=session, posts=posts, errors={})
 
 
 if __name__ == '__main__':

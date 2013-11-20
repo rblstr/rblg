@@ -18,12 +18,17 @@
 		{% endif %}
 	</div>
 	<div>
-		{% if blogs %}
-			{% for blog in blogs  %}
+		{% if posts %}
+			{% for post in posts %}
+				<div>
+					<span>{{post.title}}</span>
+					<br>
+					<span>{{post.content}}</span>
+				</div>
 			{% endfor %}
 		{% else %}
-		<p>No entries</b>
-	{% endif %}
-</div>
+			<p>No entries</p>
+		{% endif %}
+	</div>
 </div>
 {% endblock %}
