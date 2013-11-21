@@ -1,5 +1,5 @@
 import hmac
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 
 
@@ -9,6 +9,7 @@ SECRET_KEY = 'skeleton_key'
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rblg.db'
+app.config['SECRET_KEY'] = SECRET_KEY
 db = SQLAlchemy(app)
 
 
@@ -62,7 +63,8 @@ def register():
 	user = User(username, password)
 	db.session.add(user)
 	db.session.commit()
-	response = app.make_response('Registration successful')
+	flash('Registration successful')
+	response = app.make_response(redirect('/'))
 	user_cookie = create_cookie(username)
 	response.set_cookie('user', value=user_cookie)
 	return response
@@ -72,18 +74,15 @@ def register():
 def login():
 	username = request.form['username']
 	password = request.form['password']
-	errors = {
-		'username_error':'',
-		'password_error':''
-	}
 	user = User.query.filter_by(username=username).first()
 	if not username or not user:
-		errors['username_error'] = 'Invalid username'
-		return render_template('index.html', session={}, errors=errors)
+		flash('Invalid username')
+		return app.make_response(redirect('/'))
 	if not password or password != user.password:
-		errors['password_error'] = 'Invalid password'
-		return render_template('index.html', session={}, errors=errors)
-	response = app.make_response('Login successful')
+		flash('Invalid password')
+		return app.make_response(redirect('/'))
+	flash('Login successful')
+	response = app.make_response(redirect('/'))
 	user_cookie = create_cookie(username)
 	response.set_cookie('user', value=user_cookie)
 	return response
@@ -91,7 +90,8 @@ def login():
 
 @app.route('/logout', methods=['GET'])
 def logout():
-	response = app.make_response('Logout successful')
+	flash('Logout successful')
+	response = app.make_response(redirect('/'))
 	response.set_cookie('user', expires=0)
 	return response
 
@@ -100,7 +100,8 @@ def logout():
 def blogs():
 	user_cookie = request.cookies.get('user')
 	if not user_cookie or not validate_cookie(user_cookie):
-		return 'Must be logged in to post'
+		flash('Must be logged in to post')
+		return app.make_response(redirect('/'))
 	username = parse_cookie(user_cookie)
 	errors = {}
 	post_title = request.form.get('title')
@@ -110,11 +111,14 @@ def blogs():
 	if not post_content:
 		errors['content_error'] = 'No content'
 	if errors:
-		return "title_error: %s content_error: %s" % (errors.get('title_error', ''), errors.get('content_error', ''))
+		flash("title_error: %s content_error: %s" % (errors.get('title_error', ''), errors.get('content_error', '')))
+		return app.make_response(redirect('/'))
 	post = Post(post_title, post_content)
 	db.session.add(post)
 	db.session.commit()
-	return 'Post created'
+	flash('Post created')
+	response = app.make_response(redirect('/'))
+	return response
 
 
 @app.route('/', methods=['GET'])

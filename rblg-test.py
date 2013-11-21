@@ -46,11 +46,11 @@ class UserLoginTestCase(unittest.TestCase):
         return self.app.post('/login', data={
                 'username':username,
                 'password':password
-            })
+            }, follow_redirects=True)
 
     def logout(self):
         """ logout helper """
-        return self.app.get('/logout')
+        return self.app.get('/logout', follow_redirects=True)
 
     def test_login_link(self):
         """ test login link is present when not logged in """
@@ -101,7 +101,7 @@ class UserLoginTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue('/logout' in response.data)
         self.assertFalse('/login' in response.data)
-        response = self.app.get('/logout')
+        response = self.app.get('/logout', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Logout successful' in response.data)
         response = self.app.get('/')
@@ -135,7 +135,7 @@ class PostsTestCase(unittest.TestCase):
         response = self.app.post('/blogs', data={
             'title':'post_id_1',
             'content':'post_id_1_content'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Must be logged in to post' in response.data)
 
@@ -144,13 +144,13 @@ class PostsTestCase(unittest.TestCase):
         response = self.app.post('/login', data={
             'username':'admin',
             'password':'admin'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
             'title':'post_id_1',
             'content':'post_id_1_content'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Post created' in response.data)
 
@@ -159,13 +159,13 @@ class PostsTestCase(unittest.TestCase):
         response = self.app.post('/login', data={
             'username':'admin',
             'password':'admin'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
             'title':'post_id_1',
             'content':''
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('No content' in response.data)
 
@@ -174,13 +174,13 @@ class PostsTestCase(unittest.TestCase):
         response = self.app.post('/login', data={
             'username':'admin',
             'password':'admin'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
             'title':'',
             'content':'post_id_1_content'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('No title' in response.data)
 
@@ -189,13 +189,13 @@ class PostsTestCase(unittest.TestCase):
         response = self.app.post('/login', data={
             'username':'admin',
             'password':'admin'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
             'title':'post_id_1',
             'content':'post_id_1_content'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Post created' in response.data)
         response = self.app.get('/')
@@ -219,7 +219,7 @@ class UserRegistrationTestCase(unittest.TestCase):
         response = self.app.post('/register', data={
             'username':'test_username',
             'password':'test_password'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Registration successful' in response.data)
 
@@ -254,7 +254,7 @@ class UserRegistrationTestCase(unittest.TestCase):
         response = self.app.post('/login', data={
             'username':'test_username',
             'password':'test_password'
-        })
+        }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
 
