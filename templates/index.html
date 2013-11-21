@@ -6,7 +6,18 @@
 		{% if session.get('logged_in') %}
 			<a href="/logout">logout</a>
 		{% else %}
+			<span>login</span>
 			<form action="/login" method="post">
+				<span>username</span>
+				<input type="text" name="username"></input>
+				{% if errors.get('username_error') %}<span>{{errors.get('username_error')}}</span>{% endif %}
+				<span>password</span>
+				<input type="password" name="password"></input>
+				{% if errors.get('password_error') %}<span>{{errors.get('password_error')}}</span>{% endif %}
+				<input type="submit"></input>
+			</form>
+			<span>register</span>
+			<form action="/register" method="post">
 				<span>username</span>
 				<input type="text" name="username"></input>
 				{% if errors.get('username_error') %}<span>{{errors.get('username_error')}}</span>{% endif %}
@@ -17,15 +28,17 @@
 			</form>
 		{% endif %}
 	</div>
-	<div>
-		<form action="/blogs" method="post">
-			<span>title</span><input type="text" name="title"></input>
-			<br>
-			<span>content</span><input type="textarea" name="content"></input>
-			<br>
-			<input type="submit"></input>
-		</form>
-	</div>
+	{% if session.get('logged_in') %}
+		<div>
+			<form action="/blogs" method="post">
+				<span>title</span><input type="text" name="title"></input>
+				<br>
+				<span>content</span><input type="textarea" name="content"></input>
+				<br>
+				<input type="submit"></input>
+			</form>
+		</div>
+	{% endif %}
 	<div>
 		{% if posts %}
 			{% for post in posts %}
