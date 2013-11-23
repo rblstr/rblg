@@ -5,17 +5,28 @@ import unittest
 import rblg
 
 
-class FrontPageTestCase(unittest.TestCase):
+class RblgBaseTestCase(unittest.TestCase):
     def setUp(self):
         rblg.app.testing = True
         self.app = rblg.app.test_client()
         rblg.db.create_all()
 
     def tearDown(self):
-        """ Cleanup database file """
         rblg.db.session.remove()
         rblg.db.drop_all()
 
+    def login(self, username, password):
+        """ login helper function """
+        return self.app.post('/login', data={
+            'username':username,
+            'password':password
+        }, follow_redirects=True)
+
+    def logout(self):
+        """ logout helper function """
+        return self.app.get('/logout', follow_redirects=True)
+
+class FrontPageTestCase(RblgBaseTestCase):
     def test_frontpage(self):
         """ make sure everything is setup correctly """
         response = self.app.get('/', content_type='text/html')
@@ -26,31 +37,12 @@ class FrontPageTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists('rblg.db'))
 
 
-class UserLoginTestCase(unittest.TestCase):
+class UserLoginTestCase(RblgBaseTestCase):
     def setUp(self):
-        """ Setup empty database """
-        rblg.app.testing = True
-        self.app = rblg.app.test_client()
-        rblg.db.create_all()
+        RblgBaseTestCase.setUp(self)
         test_user = rblg.User('admin', 'admin')
         rblg.db.session.add(test_user)
         rblg.db.session.commit()
-
-    def tearDown(self):
-        """ Cleanup database file """
-        rblg.db.session.remove()
-        rblg.db.drop_all()
-
-    def login(self, username, password):
-        """ login helper """
-        return self.app.post('/login', data={
-                'username':username,
-                'password':password
-            }, follow_redirects=True)
-
-    def logout(self):
-        """ logout helper """
-        return self.app.get('/logout', follow_redirects=True)
 
     def test_login_link(self):
         """ test login link is present when not logged in """
@@ -109,20 +101,12 @@ class UserLoginTestCase(unittest.TestCase):
         self.assertTrue('/login' in response.data)
 
 
-class PostsTestCase(unittest.TestCase):
+class PostsTestCase(RblgBaseTestCase):
     def setUp(self):
-        """ Setup empty database """
-        rblg.app.testing = True
-        self.app = rblg.app.test_client()
-        rblg.db.create_all()
+        RblgBaseTestCase.setUp(self)
         test_user = rblg.User('admin', 'admin')
         rblg.db.session.add(test_user)
         rblg.db.session.commit()
-
-    def tearDown(self):
-        """ Cleanup database file """
-        rblg.db.session.remove()
-        rblg.db.drop_all()
 
     def test_empty_db(self):
         """ database is blank """
@@ -141,10 +125,7 @@ class PostsTestCase(unittest.TestCase):
 
     def test_login_and_post(self):
         """ can only create posts when logged in """
-        response = self.app.post('/login', data={
-            'username':'admin',
-            'password':'admin'
-        }, follow_redirects=True)
+        response = self.login('admin', 'admin')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
@@ -156,10 +137,7 @@ class PostsTestCase(unittest.TestCase):
 
     def test_login_and_post_content_error(self):
         """ can only create posts when logged in """
-        response = self.app.post('/login', data={
-            'username':'admin',
-            'password':'admin'
-        }, follow_redirects=True)
+        response = self.login('admin', 'admin')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
@@ -171,10 +149,7 @@ class PostsTestCase(unittest.TestCase):
 
     def test_login_and_post_title_error(self):
         """ can only create posts when logged in """
-        response = self.app.post('/login', data={
-            'username':'admin',
-            'password':'admin'
-        }, follow_redirects=True)
+        response = self.login('admin', 'admin')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
@@ -186,10 +161,7 @@ class PostsTestCase(unittest.TestCase):
 
     def test_post_added_to_db(self):
         """ can only create posts when logged in """
-        response = self.app.post('/login', data={
-            'username':'admin',
-            'password':'admin'
-        }, follow_redirects=True)
+        response = self.login('admin', 'admin')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
         response = self.app.post('/blogs', data={
@@ -203,17 +175,7 @@ class PostsTestCase(unittest.TestCase):
         self.assertTrue('post_id_1' in response.data)
         self.assertTrue('post_id_1_content' in response.data)
 
-class UserRegistrationTestCase(unittest.TestCase):
-    def setUp(self):
-        rblg.app.testing = True
-        self.app = rblg.app.test_client()
-        rblg.db.create_all()
-
-    def tearDown(self):
-        """ Cleanup database file """
-        rblg.db.session.remove()
-        rblg.db.drop_all()
-
+class UserRegistrationTestCase(RblgBaseTestCase):
     def test_registration_exists(self):
         """ Test registration URL """
         response = self.app.post('/register', data={
@@ -251,10 +213,7 @@ class UserRegistrationTestCase(unittest.TestCase):
     def test_register_logout_login(self):
         """ Test if we can re-login after registration """
         self.test_login_after_register()
-        response = self.app.post('/login', data={
-            'username':'test_username',
-            'password':'test_password'
-        }, follow_redirects=True)
+        response = self.login('test_username', 'test_password')
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Login successful' in response.data)
 
