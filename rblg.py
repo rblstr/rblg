@@ -97,7 +97,9 @@ def logout():
 
 
 def get_blogs():
-	return 'blogs'
+	posts = Post.query.all()
+	post_titles = [post.title for post in posts]
+	return "<br>".join(post_titles)
 
 def post_blogs():
 	user_cookie = request.cookies.get('user')
