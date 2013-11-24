@@ -96,8 +96,10 @@ def logout():
 	return response
 
 
-@app.route('/blogs', methods=['POST'])
-def blogs():
+def get_blogs():
+	return 'blogs'
+
+def post_blogs():
 	user_cookie = request.cookies.get('user')
 	if not user_cookie or not validate_cookie(user_cookie):
 		flash('Must be logged in to post')
@@ -119,6 +121,13 @@ def blogs():
 	flash('Post created')
 	response = app.make_response(redirect('/'))
 	return response
+
+@app.route('/blogs', methods=['GET', 'POST'])
+def blogs():
+	if request.method == 'GET':
+		return get_blogs()
+	elif request.method == 'POST':
+		return post_blogs()
 
 
 @app.route('/', methods=['GET'])

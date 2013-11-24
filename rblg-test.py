@@ -245,6 +245,10 @@ class CookieTestCase(unittest.TestCase):
         cookie = rblg.create_cookie('username')
         self.assertEqual('username', rblg.parse_cookie(cookie))
 
+class BlogsViewTestCase(RblgBaseTestCase):
+    def test_blogs_view_exists(self):
+        response = self.app.get('/blogs', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()
