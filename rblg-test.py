@@ -1,3 +1,4 @@
+import datetime
 import os
 import tempfile
 import hmac
@@ -249,7 +250,7 @@ class CookieTestCase(unittest.TestCase):
 class BlogsViewTestCase(RblgBaseTestCase):
     def setUp(self):
         RblgBaseTestCase.setUp(self)
-        post = rblg.Post('test_title', 'test_content')
+        post = rblg.Post('test_title', 'test_content', 'test_author', datetime.datetime.now())
         rblg.db.session.add(post)
         rblg.db.session.commit()
 

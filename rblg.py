@@ -1,3 +1,4 @@
+import datetime
 import hmac
 from flask import Flask, request, render_template, redirect, flash
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -41,10 +42,14 @@ class Post(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.Text)
 	content = db.Column(db.Text)
+	author = db.Column(db.String(20))
+	created = db.Column(db.DateTime)
 
-	def __init__(self, title, content):
+	def __init__(self, title, content, author, created):
 		self.title = title
 		self.content = content
+		self.author = author
+		self.created = created
 
 
 def init_db():
@@ -107,6 +112,10 @@ def post_blogs():
 		flash('Must be logged in to post')
 		return app.make_response(redirect('/'))
 	username = parse_cookie(user_cookie)
+	user = User.query.filter_by(username=username).first()
+	if not user:
+		flash('Must be logged in to post')
+		return app.make_response(redirect('/'))
 	errors = {}
 	post_title = request.form.get('title')
 	if not post_title:
@@ -117,7 +126,7 @@ def post_blogs():
 	if errors:
 		flash("title_error: %s content_error: %s" % (errors.get('title_error', ''), errors.get('content_error', '')))
 		return app.make_response(redirect('/'))
-	post = Post(post_title, post_content)
+	post = Post(post_title, post_content, user.username, datetime.datetime.now())
 	db.session.add(post)
 	db.session.commit()
 	flash('Post created')
