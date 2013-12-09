@@ -52,11 +52,6 @@ class Post(db.Model):
 		self.created = created
 
 
-def init_db():
-	db.drop_all()
-	db.create_all()
-
-
 @app.route('/register', methods=['POST'])
 def register():
 	username = request.form.get('username')
@@ -153,6 +148,11 @@ def index():
 	if user:
 		session['logged_in'] = True
 	return render_template('index.html', session=session, posts=posts, errors={})
+
+
+def init_db():
+	db.drop_all()
+	db.create_all()
 
 
 if __name__ == '__main__':
